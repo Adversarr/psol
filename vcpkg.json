@@ -1,0 +1,9 @@
+{
+  "name": "psol",
+  "version-string": "0.0.2",
+  "dependencies": [
+    {
+      "name": "doctest"
+    }
+  ]
+}
