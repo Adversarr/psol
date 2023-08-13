@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 project(psol)
 
 add_library(psol INTERFACE)
-target_include_directories(psol INTERFACE ${PROJECT_SOURCE_DIR}/psol/)
+target_include_directories(psol INTERFACE ${PROJECT_SOURCE_DIR}/psol/include)
 
 if (PROJECT_IS_TOP_LEVEL)
   find_package(doctest CONFIG REQUIRED)
