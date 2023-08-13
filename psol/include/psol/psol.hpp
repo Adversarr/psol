@@ -16,11 +16,13 @@ namespace psol {
     }
 
     template <typename Fp, std::size_t low_deg, std::size_t ext>
-    std::array<Fp, low_deg + ext> inline compose_nan(
+    std::array<Fp, low_deg + ext> constexpr  compose_nan(
       const std::array<Fp, low_deg>& lower) {
       std::array<Fp, low_deg + ext> result;
-      std::copy(lower.begin(), lower.end(), result.begin());
-      std::fill_n(std::advance(result.begin(), low_deg), nan<Fp>());
+      memcpy(&result.front(), &lower.front(), low_deg * sizeof(Fp));
+      if constexpr (ext > 0) {
+        memset(&result[low_deg], 0xFF, sizeof(Fp) * ext);
+      }
       return result;
     }
     template <typename _Fp, std::size_t _degree> class Poly {
@@ -77,7 +79,7 @@ namespace psol {
 
 
     template <typename Poly, typename Fp> struct Algo<Poly, Fp, 1> {
-      std::array<Fp, 1> Boundless(const Poly& c, Fp eps) const noexcept {
+      constexpr std::array<Fp, 1> Boundless(const Poly& c, Fp eps) const noexcept {
         Fp bias = c.template Get<0>();
         Fp k = c.template Get<1>();
         Fp base_sol = bias / k;
@@ -91,7 +93,7 @@ namespace psol {
     };
 
     template <typename Poly, typename Fp = typename Poly::Fp>
-    Fp do_newton(const Poly& poly, Fp x0, Fp eps, std::size_t max_iter) {
+    constexpr Fp do_newton(const Poly& poly, Fp x0, Fp eps, std::size_t max_iter) {
       // Newton's formula:
       //   $$ X_n+1 = X_n - F / F' $$
       Fp f = poly.Eval(x0);
@@ -111,7 +113,7 @@ namespace psol {
     }
 
     template <typename Poly, typename Fp> struct Algo<Poly, Fp, 2> {
-      std::array<Fp, 2> Boundless(const Poly& coe, Fp eps) const noexcept {
+    constexpr  std::array<Fp, 2> Boundless(const Poly& coe, Fp eps) const noexcept {
         // c + b x + a x2 = 0
         Fp c = coe.template Get<0>();
         Fp b = coe.template Get<1>();
@@ -119,7 +121,7 @@ namespace psol {
 
         // TODO: if a is small enough, use solver with degree=1
         if (is_small_enough(a, eps)) {
-          return compose_nan<Fp, 1, 1>(Algo<Poly, Fp, 1>::Boundless(coe, eps));
+          return compose_nan<Fp, 1, 1>(Algo<Poly, Fp, 1>{}.Boundless(coe, eps));
         }
 
         // test whether the poly does have any root in R.
@@ -142,6 +144,7 @@ namespace psol {
         Fp right = mid_point + dt;
 
         // compute the solution
+        // TODO: adaptive newton iterations.
         return std::array<Fp, 2>{do_newton(coe, left, eps, 10),
           do_newton(coe, right, eps, 10)};
       }
